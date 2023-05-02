@@ -36,7 +36,6 @@ vector<string> splitString(string str, const string &spliter)
 }
 
 
-
 Analyzer::Analyzer(const string& file_path)
 {
     log.open(this->logFileName.c_str());
@@ -67,7 +66,7 @@ Analyzer::Analyzer(const string& file_path)
         string toNodeStr = line.substr(splitIndex+3);
         vector<string> toNodes = splitString(toNodeStr, "|");
 
-        LL1Node node(startNode);
+        production node(startNode);
 
         for(string str:toNodes)
         {
@@ -137,12 +136,12 @@ void Analyzer::initWords()
     map<string,int> wordMap;
     this->nonFinalWord.clear();
     this->finalWord.clear();
-    for(LL1Node node : grammers)
+    for(production node : grammers)
     {
         wordMap[node.left] = 1;
         this->nonFinalWord.push_back(node.left);
     }
-    for(LL1Node node : grammers)
+    for(production node : grammers)
     {
         for(vector<string> words : node.right)
         {
@@ -243,7 +242,7 @@ void Analyzer::dealGrammers()
         {
             if(it->at(0) == check)  // 左 = 右边第一个，发现直接左递归
             {
-                grammers.push_back(LL1Node(tt));
+                grammers.push_back(production(tt));
                 flag = false;
                 break;
             }
@@ -285,7 +284,7 @@ void Analyzer::dealLeftCommonGrammers()
 {
     for(size_t i = 0; i < grammers.size(); i++)
     {
-        vector<LL1Node> afterDeal = dealCommonGrammer(grammers[i]);
+        vector<production> afterDeal = dealCommonGrammer(grammers[i]);
         if(afterDeal.empty())   continue;
         grammers.erase(grammers.begin() + i);
         grammers.insert(grammers.end(), afterDeal.begin(), afterDeal.end());
@@ -304,7 +303,7 @@ void Analyzer::simplify()
     memset(used, 0, sizeof(used));
     int x = startWordIndex;
     dfs(x);
-    vector<LL1Node> res;
+    vector<production> res;
     for(size_t i = 0; i < grammers.size(); i++)
     {
         if(used[i])
@@ -329,8 +328,6 @@ void Analyzer::dfsFindFirst(int i)
             string word = it->at(j);
             if(isFinalWord(word) == false)  // 非终结符号，则应该把 word的first集合加入到it中
             {
-                // 走你
-                // dfs(?);
                 int y = getNonFinalWordIndex(word);
                 string &tleft = grammers[y].left;
                 dfsFindFirst(y);   // 先取得y的first集合
@@ -431,7 +428,7 @@ void Analyzer::makeFollow()
                         {
                             size_t sizeBefore = follow[word].size();
                             append(left, it->at(j));    // B可能是最后一个, 把 A的follow集合加入到B中
-                            if(grammers[x].inclueEpsilon() == false)
+                            if(grammers[x].includeEpsilon() == false)
                                 flag = false;
                             size_t sizeAfter = follow[word].size();
                             if(sizeAfter > sizeBefore)    go = true;   // 还在变化，要继续
@@ -452,7 +449,7 @@ void Analyzer::makeFollow()
                                 }
                                 int sizeAfter = follow[word].size();
                                 if(sizeAfter > sizeBefore)  go = true;
-                                if(grammers[getNonFinalWordIndex(nextWord)].inclueEpsilon() == false)
+                                if(grammers[getNonFinalWordIndex(nextWord)].includeEpsilon() == false)
                                     break;
                             }
                             else
@@ -475,7 +472,7 @@ void Analyzer::makeFollow()
                 it++;
             }
         }
-        if(go == false)   // 没有变化，跳出循环
+        if(!go)   // 没有变化，跳出循环
             break;
     }
     map<string, set<string>>::iterator it = follow.begin();
@@ -553,8 +550,6 @@ void Analyzer::dfs(int i)
             string word = it->at(j);
             if(isFinalWord(word) == false)  // 非终结符号，则应该把 word的first集合加入到it中
             {
-                // 走你
-                // dfs(?);
                 int y = getNonFinalWordIndex(word);
                 dfs(y);   // 先取得y的first集合
             }
@@ -563,9 +558,9 @@ void Analyzer::dfs(int i)
 }
 
 // abc | ade| ede | acf
-vector<LL1Node> Analyzer::dealCommonGrammer(LL1Node &node)
+vector<production> Analyzer::dealCommonGrammer(production &node)
 {
-    vector<LL1Node> afterDeal;
+    vector<production> afterDeal;
     for(size_t i = 0; i < node.right.size(); i++)
     {
         string iFrist = node.right[i][0];
@@ -595,7 +590,7 @@ vector<LL1Node> Analyzer::dealCommonGrammer(LL1Node &node)
             temp.push_back(noCommonLefts);
 
             string newNodeName = node.left + "'";  // 生成新结点
-            LL1Node newNode(newNodeName);
+            production newNode(newNodeName);
             newNode.right = temp;
 
 
@@ -604,7 +599,7 @@ vector<LL1Node> Analyzer::dealCommonGrammer(LL1Node &node)
             link.push_back(newNodeName);
             noCommonTemp.insert(noCommonTemp.begin(), link);
 
-            LL1Node oriNode(node.left);
+            production oriNode(node.left);
             oriNode.right = noCommonTemp;
 
             afterDeal.push_back(oriNode);
@@ -675,7 +670,7 @@ void Analyzer::printStep(int step, stack<string> stk, vector<string> src, string
 
     analyzerLog1.push_back(to_string(step));
     string out="";
-    while(stk.empty() == false)
+    while(!stk.empty())
     {
         out = stk.top()+ " " + out;
         stk.pop();

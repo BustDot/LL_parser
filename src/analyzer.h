@@ -1,7 +1,3 @@
-//
-// Created by 潘昊喆 on 2023/5/1.
-//
-
 #ifndef LL_PARSER_ANALYZER_H
 #define LL_PARSER_ANALYZER_H
 
@@ -21,7 +17,7 @@ private:
     void dfs(int i);
     void dfsFindFirst(int i);
 
-    vector<LL1Node> dealCommonGrammer(LL1Node &node);
+    vector<production> dealCommonGrammer(production &node);
     void append(const string &str1, const string &str2);
 
     void printStep(int step, stack<string> stk, vector<string> src, string wf, int x);
